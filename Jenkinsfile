@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        SONAR_TOKEN = credentials('sonar-token')
+    tools {
+        sonarQube 'SonarScanner'
     }
 
     stages {
