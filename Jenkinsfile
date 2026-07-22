@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'jdk21'
-    }
+    dependencyCheck 'DependencyCheck'
+}
 
     environment {
         SCANNER_HOME = tool 'SonarScanner'
