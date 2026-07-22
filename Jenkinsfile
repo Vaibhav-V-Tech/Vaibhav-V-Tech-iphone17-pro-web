@@ -1,4 +1,5 @@
 pipeline {
+
     agent any
 
     stages {
@@ -9,43 +10,48 @@ pipeline {
             }
         }
 
-       stage('SonarQube Scan') {
-    steps {
-        script {
-            def scannerHome = tool 'SonarScanner'
+        stage('SonarQube Scan') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
 
-            withSonarQubeEnv('sonarqube') {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    bat """
-                    ${scannerHome}\\bin\\sonar-scanner.bat ^
-                    -Dsonar.projectKey=iphone17-pro-web ^
-                    -Dsonar.projectName=iphone17-pro-web ^
-                    -Dsonar.sources=. ^
-                    -Dsonar.login=%SONAR_TOKEN%
-                    """
+                    withSonarQubeEnv('sonarqube') {
+                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+
+                            bat """
+                            ${scannerHome}\\bin\\sonar-scanner.bat ^
+                            -Dsonar.projectKey=iphone17-pro-web ^
+                            -Dsonar.projectName=iphone17-pro-web ^
+                            -Dsonar.sources=. ^
+                            -Dsonar.login=%SONAR_TOKEN%
+                            """
+                        }
+                    }
                 }
             }
         }
-    }
-}
+
+        stage('OWASP Dependency Check') {
+            steps {
+
+                dependencyCheck(
+                    odcInstallation: 'DependencyCheck',
+                    additionalArguments: '--scan .'
+                )
+
+                dependencyCheckPublisher(
+                    pattern: '**/dependency-check-report.xml'
+                )
+
+            }
+        }
 
         stage('Docker Build') {
             steps {
                 bat 'docker build -t iphone17-pro-web .'
             }
         }
+
     }
 }
-
-       stage('OWASP Dependency Check') {
-    steps {
-        dependencyCheck(
-            odcInstallation: 'DependencyCheck',
-            additionalArguments: '--scan .'
-        )
-
-        dependencyCheckPublisher(
-            pattern: '**/dependency-check-report.xml'
-        )
-    }
-}
+                
