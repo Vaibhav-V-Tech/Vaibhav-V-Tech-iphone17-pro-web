@@ -10,17 +10,21 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    bat '''
-                    sonar-scanner ^
-                    -Dsonar.projectKey=iphone17-pro-web ^
-                    -Dsonar.projectName=iphone17-pro-web ^
-                    -Dsonar.sources=.
-                    '''
-                }
+    steps {
+        script {
+            def scannerHome = tool 'SonarScanner'
+
+            withSonarQubeEnv('sonarqube') {
+                bat """
+                ${scannerHome}\\bin\\sonar-scanner.bat ^
+                -Dsonar.projectKey=iphone17-pro-web ^
+                -Dsonar.projectName=iphone17-pro-web ^
+                -Dsonar.sources=.
+                """
             }
         }
+    }
+}
 
         stage('Docker Build') {
             steps {
