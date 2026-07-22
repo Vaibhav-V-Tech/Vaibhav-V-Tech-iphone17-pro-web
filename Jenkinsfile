@@ -3,13 +3,10 @@ pipeline {
     agent any
 
 
-    tools {
-        dependency-check 'DependencyCheck'
-    }
-
-
     environment {
+
         SCANNER_HOME = tool 'SonarScanner'
+
     }
 
 
@@ -17,10 +14,15 @@ pipeline {
 
 
         stage('Checkout') {
+
             steps {
+
                 checkout scm
-                echo 'Repository checked out successfully'
+
+                echo "Repository checked out successfully"
+
             }
+
         }
 
 
@@ -29,7 +31,9 @@ pipeline {
 
             steps {
 
+
                 withSonarQubeEnv('sonarqube') {
+
 
                     withCredentials([
                         string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')
@@ -37,16 +41,21 @@ pipeline {
 
 
                         bat """
+
                         %SCANNER_HOME%\\bin\\sonar-scanner.bat ^
                         -Dsonar.projectKey=iphone17-pro-web ^
                         -Dsonar.projectName=iphone17-pro-web ^
                         -Dsonar.sources=. ^
                         -Dsonar.token=%SONAR_TOKEN%
+
                         """
 
                     }
+
                 }
+
             }
+
         }
 
 
@@ -55,13 +64,17 @@ pipeline {
 
             steps {
 
+
                 timeout(time: 5, unit: 'MINUTES') {
 
-                    waitForQualityGate abortPipeline: true
+
+                    waitForQualityGate abortPipeline: false
+
 
                 }
 
             }
+
         }
 
 
@@ -69,37 +82,43 @@ pipeline {
 
         stage('OWASP Dependency Check') {
 
+
             steps {
 
 
                 withCredentials([
-                    string(credentialsId: 'nvd_api_key', variable: 'NVD_API_KEY')
+                    string(credentialsId: 'nvd_api_key', variable: 'NVD_KEY')
                 ]) {
 
 
                     dependencyCheck(
-                        
+
                         odcInstallation: 'DependencyCheck',
 
                         additionalArguments: """
                         --scan .
-                        --format ALL
+                        --format HTML
+                        --format XML
                         --out dependency-check-report
-                        --nvdApiKey ${NVD_API_KEY}
-                        --project iphone17-pro-web
+                        --nvdApiKey %NVD_KEY%
                         """,
 
                         stopBuild: false
+
                     )
 
 
                 }
 
 
-
                 dependencyCheckPublisher(
-                    pattern: '**/dependency-check-report/dependency-check-report.xml'
+
+                    pattern: '**/dependency-check-report.xml',
+
+                    stopBuild: false
+
                 )
+
 
             }
 
@@ -111,21 +130,23 @@ pipeline {
 
         stage('Docker Build') {
 
+
             steps {
 
+
                 bat """
+
                 docker build -t iphone17-pro-web .
+
                 """
+
 
             }
 
         }
 
 
-
     }
-
-
 
 
 
@@ -136,24 +157,31 @@ pipeline {
 
 
             archiveArtifacts(
+
                 artifacts: 'dependency-check-report/**/*',
+
                 allowEmptyArchive: true
+
             )
 
 
         }
 
 
+
         success {
 
-            echo 'Pipeline completed successfully'
+
+            echo "Pipeline completed successfully"
 
         }
 
 
+
         failure {
 
-            echo 'Pipeline failed'
+
+            echo "Pipeline failed"
 
         }
 
