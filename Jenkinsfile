@@ -82,34 +82,39 @@ pipeline {
 
         stage('OWASP Dependency Check') {
 
+    steps {
 
-            steps {
+        withCredentials([
+            string(credentialsId: 'nvd_api_key', variable: 'NVD_KEY')
+        ]) {
+
+            bat """
+            if not exist dependency-check-report mkdir dependency-check-report
+            """
+
+            dependencyCheck(
+                odcInstallation: 'DependencyCheck',
+                additionalArguments: """
+                    --scan .
+                    --format HTML
+                    --format XML
+                    --out dependency-check-report
+                    --nvdApiKey %NVD_KEY%
+                    --project iphone17-pro-web
+                """,
+                stopBuild: false
+            )
+
+        }
 
 
-                withCredentials([
-                    string(credentialsId: 'nvd_api_key', variable: 'NVD_KEY')
-                ]) {
+        dependencyCheckPublisher(
+            pattern: 'dependency-check-report/dependency-check-report.xml',
+            stopBuild: false
+        )
 
-
-                    dependencyCheck(
-
-                        odcInstallation: 'DependencyCheck',
-
-                        additionalArguments: """
-                        --scan .
-                        --format HTML
-                        --format XML
-                        --out dependency-check-report
-                        --nvdApiKey %NVD_KEY%
-                        """,
-
-                        stopBuild: false
-
-                    )
-
-
-                }
-
+    }
+}
 
                 dependencyCheckPublisher(
 
