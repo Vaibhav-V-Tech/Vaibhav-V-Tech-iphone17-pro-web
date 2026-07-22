@@ -9,18 +9,21 @@ pipeline {
             }
         }
 
-        stage('SonarQube Scan') {
+       stage('SonarQube Scan') {
     steps {
         script {
             def scannerHome = tool 'SonarScanner'
 
             withSonarQubeEnv('sonarqube') {
-                bat """
-                ${scannerHome}\\bin\\sonar-scanner.bat ^
-                -Dsonar.projectKey=iphone17-pro-web ^
-                -Dsonar.projectName=iphone17-pro-web ^
-                -Dsonar.sources=.
-                """
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    bat """
+                    ${scannerHome}\\bin\\sonar-scanner.bat ^
+                    -Dsonar.projectKey=iphone17-pro-web ^
+                    -Dsonar.projectName=iphone17-pro-web ^
+                    -Dsonar.sources=. ^
+                    -Dsonar.login=%SONAR_TOKEN%
+                    """
+                }
             }
         }
     }
