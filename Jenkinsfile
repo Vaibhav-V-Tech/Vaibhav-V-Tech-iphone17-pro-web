@@ -49,34 +49,32 @@ pipeline {
             }
         }
 
-
         stage('OWASP Dependency Check') {
 
-            steps {
+    steps {
 
-                dependencyCheck(
+        bat 'if not exist dependency-check-report mkdir dependency-check-report'
 
-                    odcInstallation: 'DependencyCheck',
+        dependencyCheck(
 
-                    additionalArguments: '''
-                    --scan .
-                    --format ALL
-                    --out dependency-check-report
-                    --prettyPrint
-                    ''',
+            odcInstallation: 'DependencyCheck',
 
-                    stopBuild: false
-                )
+            additionalArguments: '''
+            --scan .
+            --format ALL
+            --out dependency-check-report
+            --prettyPrint
+            ''',
+
+            stopBuild: false
+        )
 
 
-                dependencyCheckPublisher(
-
-                    pattern: 'dependency-check-report/dependency-check-report.xml'
-
-                )
-            }
-        }
-
+        dependencyCheckPublisher(
+            pattern: 'dependency-check-report/dependency-check-report.xml'
+        )
+    }
+}
 
         stage('Docker Build') {
 
@@ -95,8 +93,8 @@ pipeline {
         always {
 
             archiveArtifacts(
-                artifacts: 'dependency-check-report/**/*',
-                allowEmptyArchive: true
+                
+                archiveArtifacts artifacts: 'dependency-check-report/**', allowEmptyArchive: true
             )
 
         }
